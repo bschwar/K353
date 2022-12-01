@@ -1,0 +1,414 @@
+rm(list = ls())
+load(url("https://www.dropbox.com/s/g852wf1akx3xljl/airbnb_project.rdata?dl=1"))
+###HouseKeeping#############################################################
+#Add Num Reserve Days
+listing_2016Q2_booking <- listing_2016Q2[listing_2016Q2$Status=='R',]
+agg_booking_Q2 <- aggregate(Status~PropertyID ,data=listing_2016Q2_booking,length)
+colnames(agg_booking_Q2)<- c("PropertyID","BookingQ2")
+property_info<- merge(x=property_info,y=agg_booking_Q2,by="PropertyID",all.x=TRUE)
+property_info$BookingQ2[is.na(property_info$BookingQ2)]=0
+##
+listing_2016Q1_booking <- listing_2016Q1[listing_2016Q1$Status=='R',]
+agg_booking_Q1 <- aggregate(Status~PropertyID ,data=listing_2016Q1_booking,length)
+colnames(agg_booking_Q1)<- c("PropertyID","BookingQ1")
+property_info<- merge(x=property_info,y=agg_booking_Q1,by="PropertyID",all.x=TRUE)
+property_info$BookingQ1[is.na(property_info$BookingQ1)]=0
+
+#Add Num Booked Days
+listing_2016Q2_booked <- listing_2016Q2[listing_2016Q2$Status=='B',]
+agg_booked_Q2 <- aggregate(Status~PropertyID ,data=listing_2016Q2_booked,length)
+colnames(agg_booked_Q2)<- c("PropertyID","BookedQ2")
+property_info<- merge(x=property_info,y=agg_booked_Q2,by="PropertyID",all.x=TRUE)
+property_info$BookedQ2[is.na(property_info$BookedQ2)]=0
+##
+listing_2016Q1_booked <- listing_2016Q1[listing_2016Q1$Status=='B',]
+agg_booked_Q1 <- aggregate(Status~PropertyID ,data=listing_2016Q1_booked,length)
+colnames(agg_booked_Q1)<- c("PropertyID","BookedQ1")
+property_info<- merge(x=property_info,y=agg_booked_Q1,by="PropertyID",all.x=TRUE)
+property_info$BookedQ1[is.na(property_info$BookedQ1)]=0
+
+
+#Add Average Price
+avg_priceQ1_mean <- aggregate(Price~PropertyID, data=listing_2016Q1,mean)
+colnames(avg_priceQ1_mean)<- c("PropertyID","meanPriceQ1")
+property_info<- merge(x=property_info,y=avg_priceQ1_mean,by="PropertyID",all.x=TRUE)
+##
+avg_priceQ2_mean <- aggregate(Price~PropertyID, data=listing_2016Q2,mean)
+colnames(avg_priceQ2_mean)<- c("PropertyID","meanPriceQ2")
+property_info<- merge(x=property_info,y=avg_priceQ2_mean,by="PropertyID",all.x=TRUE)
+
+#Fix Neighborgood
+tb_neighborhood = table(property_info$Neighborhood)
+rare_neighborhood = names(tb_neighborhood[tb_neighborhood<=20])
+property_info$Neighborhood[property_info$Neighborhood %in% rare_neighborhood] = "rare neighborhood"
+
+#Fix Zipcode
+tb_zipcode = table(property_info$Zipcode)
+rare_zipcode = names(tb_zipcode[tb_zipcode<=20])
+property_info$Zipcode[property_info$Zipcode %in% rare_zipcode] = "rare zipcode"
+
+#Fix NAs
+property_info$OverallRating[is.na(property_info$OverallRating)] = -1000
+property_info$CleanRating[is.na(property_info$CleanRating)] = -1000
+property_info$CheckinRating[is.na(property_info$CheckinRating)] = -1000
+property_info$ValueRating[is.na(property_info$ValueRating)] = -1000
+property_info$MaxGuests[is.na(property_info$MaxGuests)] = -1000
+property_info$ResponseTimemin[is.na(property_info$ResponseTimemin)] = -1000
+
+###
+#lin_regOverall <- lm(formula = OverallRating ~ meanPriceQ2+NumberofReviews + BusinessReady+BookingQ2+BookingQ1, data = property_info)
+#summary(lin_regOverall)
+#for(i in 1:length(property_info$OverallRating)){
+#  if(is.na(property_info$OverallRating[i])){
+#    property_info$OverallRating[i]<-predict(object=lin_regOverall,newdata = property_info[i,])
+#  }
+#}
+#mean(is.na(property_info$OverallRating))
+
+#lin_regOverall <- lm(formula = CleanRating ~ meanPriceQ2+NumberofReviews +MinimumStay + BusinessReady+BookingQ2+BookingQ1, data = property_info)
+#summary(lin_regOverall)
+#for(i in 1:length(property_info$CleanRating)){
+#  if(is.na(property_info$CleanRating[i])){
+#    property_info$CleanRating[i]<-predict(object=lin_regOverall,newdata = property_info[i,])
+#  }
+#}
+#mean(is.na(property_info$CleanRating))
+
+#lin_regOverall <- lm(formula = CheckinRating ~ meanPriceQ2+NumberofReviews +MinimumStay + BusinessReady+BookingQ2+BookingQ1, data = property_info)
+#summary(lin_regOverall)
+#for(i in 1:length(property_info$CheckinRating)){
+#  if(is.na(property_info$CheckinRating[i])){
+#    property_info$CheckinRating[i]<-predict(object=lin_regOverall,newdata = property_info[i,])
+#  }
+#}
+#mean(is.na(property_info$CheckinRating))
+
+#lin_regOverall <- lm(formula = ValueRating ~ meanPriceQ2+NumberofReviews +MinimumStay + BusinessReady+BookingQ2+BookingQ1, data = property_info)
+#summary(lin_regOverall)
+#for(i in 1:length(property_info$ValueRating)){
+#  if(is.na(property_info$ValueRating[i])){
+#    property_info$ValueRating[i]<-predict(object=lin_regOverall,newdata = property_info[i,])
+#  }
+#}
+#mean(is.na(property_info$ValueRating))
+
+#lin_regOverall <- lm(formula = ResponseTimemin ~ NumberofReviews +MinimumStay + BusinessReady+BookingQ2+BookingQ1, data = property_info)
+#summary(lin_regOverall)
+#for(i in 1:length(property_info$ResponseTimemin)){
+#  if(is.na(property_info$ResponseTimemin[i])){
+#    property_info$ResponseTimemin[i]<-predict(object=lin_regOverall,newdata = property_info[i,])
+#  }
+#}
+#mean(is.na(property_info$ResponseTimemin))
+
+#Seperate test and train data
+property_info_train<-property_info[property_info$PropertyID %in% reserve_2016Q3_train$PropertyID,]
+property_info_test<-property_info[property_info$PropertyID %in% PropertyID_test,]
+
+#Add Q3 Booking
+property_info_train<-merge(x=property_info_train,y=reserve_2016Q3_train,by="PropertyID",all.x=TRUE)
+
+#####Packages#############
+
+##install.packages('rpart')
+library(rpart)
+
+#install.packages('randomForest')
+library(randomForest)
+
+#install.packages('gbm')
+library(gbm)
+
+#install.packages('mlbench')
+library(mlbench)
+
+###Functions#########################################################
+lmFunction<- function(fvars){
+  set.seed(0)
+  property_info_train$CVLabel = sample(x=1:5,size=nrow(property_info_train),replace=TRUE)
+  cv_mse_lr <- rep(NA,5)
+  v_label<-1
+  
+  f <- as.formula(paste("NumReserveDays2016Q3", paste(fvars, collapse = " + "), sep = " ~ "))
+  print(f)
+  while(v_label<6){
+    lr_model <- lm(formula=f,data=property_info_train[property_info_train$CVLabel != v_label,])
+    
+    lr_pred <- predict(lr_model,newdata=property_info_train[property_info_train$CVLabel == v_label,])
+    
+    cv_mse_lr[v_label] <- mean((property_info_train$NumReserveDays2016Q3[property_info_train$CVLabel == v_label]-lr_pred)^2,na.rm=TRUE)
+    
+    v_label<-1+v_label
+  }
+  
+  CV_MSE<-sqrt(mean(cv_mse_lr))
+  print(CV_MSE)
+  return(CV_MSE)
+}
+
+rfFunction<- function(fvars,NumTree,Mtryy,Nsize){
+  set.seed(0)
+  property_info_train$CVLabel = sample(x=1:5,size=nrow(property_info_train),replace=TRUE)
+  cv_mse_lr <- rep(NA,5)
+  v_label<-1
+  
+  f <- as.formula(paste("NumReserveDays2016Q3", paste(fvars, collapse = " + "), sep = " ~ "))
+  print(f)
+  while(v_label<6){
+    rf_model <- randomForest(formula=f,data=property_info_train[property_info_train$CVLabel != v_label,],ntree=NumTree,mtry=Mtryy,nodesize=Nsize,importance=TRUE)
+    
+    rf_pred <- predict(rf_model,newdata=property_info_train[property_info_train$CVLabel == v_label,])
+    
+    cv_mse_lr[v_label] <- mean((property_info_train$NumReserveDays2016Q3[property_info_train$CVLabel == v_label]-rf_pred)^2,na.rm=TRUE)
+    
+    v_label<-1+v_label
+  }
+  
+  CV_MSE<-sqrt(mean(cv_mse_lr))
+  print(CV_MSE)
+  return(CV_MSE)
+}
+
+treeFunction<- function(fvars,MinSplit){
+  set.seed(0)
+  property_info_train$CVLabel = sample(x=1:5,size=nrow(property_info_train),replace=TRUE)
+  cv_mse_lr <- rep(NA,5)
+  v_label<-1
+  
+  f <- as.formula(paste("NumReserveDays2016Q3", paste(fvars, collapse = " + "), sep = " ~ "))
+  print(f)
+  while(v_label<6){
+    tree_model <- rpart(formula=f,data=property_info_train[property_info_train$CVLabel != v_label,],method="anova", control = rpart.control(minsplit=MinSplit))
+    
+    tree_pred <- predict(tree_model,newdata=property_info_train[property_info_train$CVLabel == v_label,])
+    
+    cv_mse_lr[v_label] <- mean((property_info_train$NumReserveDays2016Q3[property_info_train$CVLabel == v_label]-tree_pred)^2,na.rm=TRUE)
+    
+    v_label<-1+v_label
+  }
+  
+  CV_MSE<-sqrt(mean(cv_mse_lr))
+  print(CV_MSE)
+  return(CV_MSE)
+}
+
+boostedFunction<- function(fvars,nTrees,iDepth,Shrink){
+  set.seed(0)
+  property_info_train$CVLabel = sample(x=1:5,size=nrow(property_info_train),replace=TRUE)
+  cv_mse_lr <- rep(NA,5)
+  v_label<-1
+  
+  f <- as.formula(paste("NumReserveDays2016Q3", paste(fvars, collapse = " + "), sep = " ~ "))
+  print(f)
+  while(v_label<6){
+    boosted_model <- gbm(formula=f,data=property_info_train[property_info_train$CVLabel != v_label,],n.trees = nTrees,interaction.depth = iDepth, shrinkage = Shrink)
+    
+    boosted_pred <- predict(boosted_model,newdata=property_info_train[property_info_train$CVLabel == v_label,])
+    
+    cv_mse_lr[v_label] <- mean((property_info_train$NumReserveDays2016Q3[property_info_train$CVLabel == v_label]-boosted_pred)^2,na.rm=TRUE)
+    
+    v_label<-1+v_label
+  }
+  
+  CV_MSE<-sqrt(mean(cv_mse_lr))
+  print(CV_MSE)
+  return(CV_MSE)
+}
+
+###Linear Regression Tests#############################################
+lin_reg1 <- lm(formula = NumReserveDays2016Q3 ~ meanPriceQ1+meanPriceQ2+NumberofReviews
+               +OverallRating + CleanRating + CheckinRating + ResponseTimemin 
+               +MinimumStay + BusinessReady 
+               +InstantbookEnabled + BookingQ2+BookingQ1+AQ1+AQ2, data = property_info_train)
+
+summary(lin_reg1)
+
+testOnTrain<-predict(object=lin_reg1,newdata = property_info_train)
+
+RMSE1<-sqrt(mean((property_info_train$NumReserveDays2016Q3 - testOnTrain)^2, na.rm = TRUE))
+
+#Test 2
+lin_reg2 <- lm(formula = NumReserveDays2016Q3 ~  meanPriceQ1+meanPriceQ2+NumberofReviews
+               +MinimumStay + BusinessReady+BookingQ2+BookingQ1, data = property_info_train)
+
+summary(lin_reg2)
+
+#Test on Training Data
+testOnTrain<-predict(object=lin_reg2,newdata = property_info_train)
+
+RMSE2<-sqrt(mean((property_info_train$NumReserveDays2016Q3 - testOnTrain)^2, na.rm = TRUE))
+
+###Regression Tree#######################################################################
+####Tree with significant values from Lin1
+Tree1<- rpart(formula = NumReserveDays2016Q3 ~ NumberofReviews
+              +OverallRating + CleanRating + CheckinRating + ResponseTimemin 
+              +MinimumStay + BusinessReady 
+              +InstantbookEnabled + BookingQ2+BookingQ1, data = property_info_train, method="anova")
+
+#testOnTrain<-predict(object=Tree1,newdata = property_info_train)
+
+#RMSETree<-sqrt(mean((property_info_train$NumReserveDays2016Q3 - testOnTrain)^2, na.rm = TRUE))
+
+####Tree with Values from Lin 2
+Tree2<- rpart(formula = NumReserveDays2016Q3 ~ NumberofReviews
+              +MinimumStay + BusinessReady+BookingQ2+BookingQ1, data = property_info_train, method="anova", control = rpart.control(minsplit=10))
+
+#testOnTrain<-predict(object=Tree2,newdata = property_info_train)
+
+#RMSETree2<-sqrt(mean((property_info_train$NumReserveDays2016Q3 - testOnTrain)^2, na.rm = TRUE))
+
+plot(Tree2, 
+     uniform=TRUE,
+     ylim=c(0,1.5),xlim=c(0,13))
+text(Tree2, cex=0.5, use.n=TRUE)
+###Random Forest##############################################################
+##All from LM2
+forestModel2<-randomForest(formula=NumReserveDays2016Q3 ~ MinimumStay + CleanRating + CheckinRating +
+                             MaxGuests + meanPriceQ1 + BusinessReady + BookedQ2 + BookedQ1 +
+                             ValueRating + OverallRating + NumberofReviews + BookingQ1 +
+                             BookingQ2 + ResponseTimemin,data=property_info_train,ntree=1000,mtry=4,nodesize=7,importance=TRUE)
+
+forestModel2
+varImpPlot(forestModel2)
+pred_forestModel2=predict(forestModel2,property_info_train)
+RMSEForest2<-sqrt(mean((property_info_train$NumReserveDays2016Q3 - pred_forestModel2)^2, na.rm = TRUE))
+
+###Boosted Trees##########################################################################################
+##All from LM2
+BoostedTrees<-gbm(formula=NumReserveDays2016Q3 ~ NumberofReviews +MinimumStay+BookingQ2+BookingQ1,data=property_info_train,n.trees = 250,interaction.depth = 2, shrinkage = .01)
+
+pred_BoostedTrees=predict(BoostedTrees,property_info_train)
+RMSEBoosted2<-sqrt(mean((property_info_train$NumReserveDays2016Q3 - pred_BoostedTrees)^2, na.rm = TRUE))
+
+####
+###Final Stuff###############################################################################################
+
+
+#Test on test Data Using Best MSE
+pred<-predict(object=forestModel2,
+              newdata = property_info_test)
+mean(is.na(pred))
+save(pred, file = "I:/2022-23/K353/Final Project/Hoosier_Analytics.rdata") 
+
+###Test with median Income##############################################
+#install.packages(c("httr","jsonlite"))
+#library(httr)
+#library(jsonlite)
+
+#res<-GET("https://api.census.gov/data/2020/acs/acs5/variables/B19301_001E.json")
+#res
+#data<-fromJSON(rawToChar(res$content))
+
+###Test Using Functions#########################################################
+#RMSE2t<-lmFunction(c("NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"))
+#RMSEForest2t<-rfFunction(c("NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),500)
+#RMSETree2t<-treeFunction(c("NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),10)
+#RMSEBoosted2t<-boostedFunction(c("NumberofReviews","MinimumStay","BookingQ2","BookingQ1"),250,2,.01)
+##with both price
+#RMSE2tPs<-lmFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"))
+#RMSEForest2tPs<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),500)
+#RMSETree2tPs<-treeFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),10)
+#RMSEBoosted2tPs<-boostedFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BookingQ2","BookingQ1"),250,2,.01)
+##with just Q2 price
+#RMSE2tP<-lmFunction(c("meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"))
+#RMSEForest2tP<-rfFunction(c("meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),500)
+#RMSETree2tP<-treeFunction(c("meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),10)
+#RMSEBoosted2tP<-boostedFunction(c("meanPriceQ2","NumberofReviews","MinimumStay","BookingQ2","BookingQ1"),250,2,.01)
+## Forest with different numTrees
+#RMSEForestNumTree100<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+#RMSEForestNumTree200<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),200)
+#RMSEForestNumTree300<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),300)
+#RMSEForestNumTree400<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),400)
+#RMSEForestNumTree500<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),500)
+#RMSEForestNumTree600<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),600)
+#RMSEForestNumTree700<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),700)
+#RMSEForestNumTree800<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),800)
+#RMSEForestNumTree900<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),900)
+#RMSEForestNumTree1000<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),1000)
+#RMSEForestNumTree1100<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),1100)
+#RMSEForestNumTree1200<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),1200)
+#RMSEForestNumTree1300<-rfFunction(c("meanPriceQ1","meanPriceQ2","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),1300)
+
+##plot(c(RMSEForestNumTree100,RMSEForestNumTree200,RMSEForestNumTree300,RMSEForestNumTree400,RMSEForestNumTree500,RMSEForestNumTree600,RMSEForestNumTree700,RMSEForestNumTree800,RMSEForestNumTree900,RMSEForestNumTree1000,RMSEForestNumTree1100,RMSEForestNumTree1200,RMSEForestNumTree1300))
+
+###Test Removal of variables and different Hyper Parameters
+NewTest1<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest2<-rfFunction(c("meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest3<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest4<-rfFunction(c("meanPriceQ1","meanPriceQ2","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest5<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest6<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest7<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest8<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest9<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest10<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","MinimumStay","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest11<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","BusinessReady","BookingQ2","BookingQ1"),100)
+NewTest12<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BookingQ2","BookingQ1"),100)
+NewTest13<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ1"),100)
+NewTest14<-rfFunction(c("meanPriceQ1","meanPriceQ2","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2"),100)
+
+plot(c(NewTest1,NewTest2,NewTest3,NewTest4,NewTest5,NewTest6,NewTest7,NewTest8,NewTest9,NewTest10,NewTest11,NewTest12,NewTest13,NewTest14))
+
+NewTest<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,10)
+
+
+NewTest1<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,1)
+NewTest2<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,2)
+NewTest3<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,3)
+NewTest4<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,4)
+NewTest5<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,5)
+NewTest6<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,6)
+NewTest7<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,7)
+NewTest8<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,8)
+NewTest9<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,9)
+NewTest10<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,10)
+NewTest11<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,11)
+NewTest12<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,12)
+NewTest13<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,13)
+NewTest14<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,14)
+NewTest15<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,15)
+NewTest16<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,16)
+
+
+plot(c(NewTest1,NewTest2,NewTest3,NewTest4,NewTest5,NewTest6,NewTest7,NewTest8,NewTest9,NewTest10,NewTest11,NewTest12,NewTest13,NewTest14,NewTest15,NewTest16))
+
+NewTestA<-rfFunction(c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1"),100,4,10)
+NewTestB<-rfFunction(c("MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin"),100,4,10)
+
+
+###Determine Order
+ForTest<-c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1")
+Torder<-c(1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+OrderTest<-rep(NA,196)
+for(i in 1:196){
+  ForTest<-c("meanPriceQ1","OverallRating","CleanRating","CheckinRating","ValueRating","MaxGuests","ResponseTimemin","NumberofReviews","MinimumStay","BusinessReady","BookingQ2","BookingQ1","BookedQ2","BookedQ1")
+  set.seed(113)
+  B<-sample(Torder)
+  OrderTest[i]<-rfFunction(ForTest[order(B)],100,4,10)
+}
+plot(OrderTest)
+OrderTest[is.na(OrderTest)] = 17
+min(OrderTest)
+max(OrderTest)
+OrderTest[OrderTest=17] = 0
+minOrderTest=14.8388
+maxOrderTest=15
+W<-which(OrderTest==min(OrderTest))
+
+###What is Next?
+NewTestB<-rfFunction(c("MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin"),100,4,10)
+NewTestB1<-rfFunction(c("Latitude","MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin"),100,4,10)
+NewTestB2<-rfFunction(c("Longitude","MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin"),100,4,10)
+NewTestB3<-rfFunction(c("RequireProfilePic","MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin"),100,4,10)
+NewTestB4<-rfFunction(c("RequirePhoneVerification","MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin"),100,4,10)
+NewTestB5<-rfFunction(c("MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin","Latitude"),100,4,10)
+NewTestB6<-rfFunction(c("MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin","Longitude"),100,4,10)
+NewTestB7<-rfFunction(c("MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin","RequireProfilePic"),100,4,10)
+NewTestB8<-rfFunction(c("ListingType","MinimumStay", "CleanRating","CheckinRating", "MaxGuests","meanPriceQ1","BusinessReady","BookedQ2", "BookedQ1", "ValueRating","OverallRating","NumberofReviews","BookingQ1","BookingQ2","ResponseTimemin","RequirePhoneVerification"),100,4,10)
+
+plot(c(NewTestB,NewTestB1,NewTestB2,NewTestB3,NewTestB4,NewTestB5,NewTestB6,NewTestB7,NewTestB8))
+
+
+###RMSE History#################################################################
+RMSEHist<-matrix(c(15.905,"randomForest(formula=NumReserveDays2016Q3 ~ NumberofReviews +MinimumStay + BusinessReady+BookingQ2+BookingQ1,data=property_info_train,ntree=500,importance=TRUE)",15.6124,"randomForest(formula=NumReserveDays2016Q3 ~ meanPriceQ1+meanPriceQ2+NumberofReviews +MinimumStay + BusinessReady+BookingQ2+BookingQ1,data=property_info_train,ntree=1000,importance=TRUE)",15.1189,"randomForest(formula=NumReserveDays2016Q3 ~ meanPriceQ1+meanPriceQ2+NumberofReviews+ OverallRating + CleanRating + CheckinRating + ValueRating + MaxGuests + ResponseTimemin +MinimumStay + BusinessReady+BookingQ2+BookingQ1,data=property_info_train,ntree=1000,importance=TRUE)",14.9002,"forestModel2<-randomForest(formula=NumReserveDays2016Q3 ~ meanPriceQ1+meanPriceQ2+NumberofReviews+ OverallRating + CleanRating + CheckinRating + ValueRating + MaxGuests + ResponseTimemin +MinimumStay + BusinessReady+BookingQ2+BookingQ1+BookedQ1+BookedQ2,data=property_info_train,ntree=1000,mtry=4,importance=TRUE)",14.9084,"forestModel2<-randomForest(formula=NumReserveDays2016Q3 ~ meanPriceQ1+meanPriceQ2+NumberofReviews+ OverallRating + CleanRating + CheckinRating + ValueRating + MaxGuests + ResponseTimemin +MinimumStay + BusinessReady+BookingQ2+BookingQ1+BookedQ1+BookedQ2,data=property_info_train,ntree=1000,mtry=4,nodesize=7,importance=TRUE)"),ncol=2,byrow=TRUE)
+RMSEHist
